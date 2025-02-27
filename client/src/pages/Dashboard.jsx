@@ -199,67 +199,67 @@ function Dashboard() {
   };
 
   // Customer Age Categories Data (static)
-  const customerAgeData = {
-    labels: ['18-24', '25-34', '35-44', '45-54', '55+'],
-    datasets: [
-      {
-        label: 'Electronics',
-        data: [15, 30, 25, 18, 12],
-        backgroundColor: '#A1EEBD',
+  // const customerAgeData = {
+  //   labels: ['18-24', '25-34', '35-44', '45-54', '55+'],
+  //   datasets: [
+  //     {
+  //       label: 'Electronics',
+  //       data: [15, 30, 25, 18, 12],
+  //       backgroundColor: '#A1EEBD',
         
-      },
-      {
-        label: 'Fashion',
-        data: [25, 35, 20, 15, 5],
-        backgroundColor: '#B6FFA1',
+  //     },
+  //     {
+  //       label: 'Fashion',
+  //       data: [25, 35, 20, 15, 5],
+  //       backgroundColor: '#B6FFA1',
         
-      },
-      {
-        label: 'Home',
-        data: [10, 20, 30, 25, 15],
-        backgroundColor: '#A0D683',
+  //     },
+  //     {
+  //       label: 'Home',
+  //       data: [10, 20, 30, 25, 15],
+  //       backgroundColor: '#A0D683',
         
-      },
-      {
-        label: 'Beauty',
-        data: [30, 25, 20, 15, 10],
-        backgroundColor: '#D3EE98',
+  //     },
+  //     {
+  //       label: 'Beauty',
+  //       data: [30, 25, 20, 15, 10],
+  //       backgroundColor: '#D3EE98',
         
-      },
-    ],
-  };
+  //     },
+  //   ],
+  // };
 
-  const customerAgeOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'right',
-        labels: {
-          padding: 20,
-        },
-      },
-      tooltip: {
-        callbacks: {
-          label: (context) => `${context.dataset.label}: ${context.raw}%`,
-        }
-      }
-    },
-    scales: {
-      y: {
-        stacked: true,
-        beginAtZero: true,
-        grid: { display: false },
-        ticks: {
-          callback: (value) => `${value}%`,
-        },
-      },
-      x: {
-        stacked: true,
-        grid: { display: false },
-      },
-    },
-  };
+  // const customerAgeOptions = {
+  //   responsive: true,
+  //   maintainAspectRatio: false,
+  //   plugins: {
+  //     legend: {
+  //       position: 'right',
+  //       labels: {
+  //         padding: 20,
+  //       },
+  //     },
+  //     tooltip: {
+  //       callbacks: {
+  //         label: (context) => `${context.dataset.label}: ${context.raw}%`,
+  //       }
+  //     }
+  //   },
+  //   scales: {
+  //     y: {
+  //       stacked: true,
+  //       beginAtZero: true,
+  //       grid: { display: false },
+  //       ticks: {
+  //         callback: (value) => `${value}%`,
+  //       },
+  //     },
+  //     x: {
+  //       stacked: true,
+  //       grid: { display: false },
+  //     },
+  //   },
+  // };
 
   const revenueOptions = {
     responsive: true,
@@ -539,7 +539,7 @@ function Dashboard() {
         </div>
 
         {/* Customer Age Categories */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        {/* <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Customer Age Categories</h2>
             <p className="text-sm text-gray-500">Product preferences by age group</p>
@@ -547,7 +547,7 @@ function Dashboard() {
           <div className="h-[300px]">
             <Bar data={customerAgeData} options={customerAgeOptions} />
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
