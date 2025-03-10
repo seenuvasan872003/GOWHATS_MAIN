@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
-import { io } from "socket.io-client";
+import { io } from 'socket.io-client';
+import api from '../utils/axios';
 import styled from "styled-components";
 import { toast } from "react-hot-toast";
 import dayjs from "dayjs";
@@ -9,9 +9,8 @@ import { Paperclip, Image, Camera, FileText, User, BotIcon, UserIcon, Wallet, La
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import RatingStars from "./LastOrder/RatingStars";
-import { useAuth } from "../context/AuthContext"; // Adjust the path based on your project structure
+import { useAuth } from "../context/AuthContext"; 
 import { sendTemplateMessage } from '../services/messageService';
-
 
 // Styled Components
 const Container = styled.div`
@@ -43,6 +42,7 @@ const ContactList = styled.div`
 `;
 
 const ContactItem = styled.div`
+  position: relative;
   padding: 15px;
   display: flex;
   align-items: center;
@@ -138,6 +138,10 @@ const Messages = styled.div`
   padding: 15px;
   overflow-y: auto;
   background: #e5ddd5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
 
   .message {
     max-width: 60%;
@@ -163,6 +167,35 @@ const Messages = styled.div`
     font-size: 10px;
     color: #888;
     text-align: right;
+  }
+`;
+
+const MessageBubble = styled.div`
+  max-width: 65%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  word-wrap: break-word;
+  font-size: 14px;
+  margin: 4px 0;
+  align-self: ${props => props.$sent ? 'flex-end' : 'flex-start'};
+  background: ${props => props.$sent ? '#dcf8c6' : '#ffffff'};
+  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+
+  &.sent {
+    margin-left: auto;
+    background: #dcf8c6;
+  }
+
+  &.received {
+    margin-right: auto;
+    background: #ffffff;
+  }
+
+  .timestamp {
+    font-size: 11px;
+    color: #888;
+    text-align: right;
+    margin-top: 2px;
   }
 `;
 
@@ -197,12 +230,11 @@ const ChatProfile = styled.div`
   overflow-y: auto;
 `;
 
-/* Profile Container */
+
 const ProfileContainer = styled.div`
   padding: 16px;
 `;
 
-/* Profile Header */
 const ProfileHeader = styled.div`
   margin-bottom: 24px;
   padding: 16px;
@@ -259,6 +291,18 @@ const ProfileHeader = styled.div`
 
 `;
 
+const NotificationBubble = styled.div`
+  background-color: #25D366;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  position: absolute;
+  right: 10px;
+  bottom: 15px;
+  min-width: 20px;
+  text-align: center;
+`;
 
 const Tabs = styled.div`
   display: flex;
@@ -279,7 +323,6 @@ const Tab = styled.div`
   }
 `;
 
-/* Order Summary */
 const OrderSummary = styled.div`
   display: grid;
   grid-template-columns: 1fr;
@@ -460,7 +503,6 @@ const EditNote = styled.div`
 `;
 
 const ChatApp = () => {
-  // Frontend state from first implementation
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -481,10 +523,14 @@ const ChatApp = () => {
   const [notes, setNotes] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editText, setEditText] = useState("");
+  const [unreadCounts, setUnreadCounts] = useState({});
+  const [loading, setLoading] = useState(true);
+  const socket = useRef(null);
+  const messagesEndRef = useRef(null);
+  const { user } = useAuth();
   const [showTemplates, setShowTemplates] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
-  
 
   const fetchTemplates = async () => {
     try {
@@ -529,54 +575,42 @@ const ChatApp = () => {
       console.error("Error sending template message:", error);
     }
   };
-  
-  
-
-  // Backend state from second implementation
-  const [unreadCounts, setUnreadCounts] = useState({});
-  const [loading, setLoading] = useState(true);
-  const socket = useRef(null);
-  const messagesEndRef = useRef(null);
-  const { user } = useAuth();
-
-  // Notes handling functions
+ 
   const handleAddNote = () => {
     if (newNote.trim() !== "") {
       setNotes([...notes, newNote]);
       setNewNote("");
     }
   };
-
+ 
   const handleDeleteNote = (index) => {
     setNotes(notes.filter((_, i) => i !== index));
   };
-
+ 
   const handleEditNote = (index) => {
     setEditingIndex(index);
     setEditText(notes[index]);
   };
-
+ 
   const handleSaveEdit = (index) => {
     const updatedNotes = [...notes];
     updatedNotes[index] = editText;
     setNotes(updatedNotes);
     setEditingIndex(null);
   };
-
-  // Search and edit functions
+ 
   const handleSearch = (e) => {
     setSearchText(e.target.value.toLowerCase());
   };
-
+ 
   const handleEdit = (field) => {
     setEditingField(field);
   };
-
+ 
   const handleSave = () => {
     setEditingField(null);
   };
-
-  // Load contacts with proper sorting and persistence
+ 
   useEffect(() => {
     const loadContacts = async () => {
       setLoading(true);
@@ -599,55 +633,38 @@ const ChatApp = () => {
         setLoading(false);
       }
     };
-
+ 
     if (user) {
       loadContacts();
     }
   }, [user]);
-
+ 
   useEffect(() => {
-    if (!selectedContact?.phone_number || !user) return;
-  
-    let isMounted = true;
+    if (!selectedContact || !user) return;
   
     const loadMessages = async () => {
       try {
-        const savedMessages = localStorage.getItem(
-          `messages_${selectedContact.phone_number}`
-        );
-        if (savedMessages && isMounted) {
-          setMessages(JSON.parse(savedMessages));
-        }
-  
         const response = await api.get('/api/messages', {
-          params: { phone_number: selectedContact.phone_number }
+          params: { 
+            phone_number: selectedContact.phone_number,
+            sort: '-timestamp' 
+          }
         });
   
-        if (response.data && isMounted) {
+        if (response.data) {
           setMessages(response.data);
-          localStorage.setItem(
-            `messages_${selectedContact.phone_number}`,
-            JSON.stringify(response.data)
-          );
         }
       } catch (error) {
         console.error('Error loading messages:', error);
-        toast.error("Failed to load messages");
       }
     };
   
     loadMessages();
-  
-    return () => {
-      isMounted = false;
-    };
   }, [selectedContact, user]);
-  
-
-  // Socket connection
+ 
   useEffect(() => {
     if (!user) return;
-
+ 
     try {
       socket.current = io("http://localhost:5000", {
         auth: { token: localStorage.getItem('token') },
@@ -658,15 +675,15 @@ const ChatApp = () => {
         timeout: 20000,
         transports: ['websocket']
       });
-
+ 
       socket.current.on('connect', () => {
         console.log('Socket connected for tenant:', user.tenant_id);
       });
-
+ 
       socket.current.on('connect_error', (error) => {
         console.error('Socket connection error:', error);
       });
-
+ 
       socket.current.on('receive_message', (message) => {
         console.log('New message received:', message);
         
@@ -689,7 +706,7 @@ const ChatApp = () => {
             [message.from]: (prev[message.from] || 0) + 1
           }));
         }
-
+ 
         setContacts(prev => {
           const existingContact = prev.find(c => c.phone_number === message.from);
           const updatedContact = {
@@ -700,35 +717,35 @@ const ChatApp = () => {
             unreadCount: selectedContact?.phone_number === message.from ? 
               0 : ((existingContact?.unreadCount || 0) + 1)
           };
-
+ 
           const newContacts = existingContact ?
             prev.map(c => c.phone_number === message.from ? updatedContact : c) :
             [updatedContact, ...prev];
-
+ 
           const sortedContacts = newContacts.sort((a, b) => 
             new Date(b.timestamp) - new Date(a.timestamp)
           );
-
+ 
           localStorage.setItem('contacts', JSON.stringify(sortedContacts));
           return sortedContacts;
         });
       });
-
+ 
       socket.current.on('reconnect', (attemptNumber) => {
         console.log('Socket reconnected after', attemptNumber, 'attempts');
       });
-
+ 
       socket.current.on('disconnect', (reason) => {
         console.log('Socket disconnected:', reason);
         if (reason === 'io server disconnect' || reason === 'transport close') {
           socket.current.connect();
         }
       });
-
+ 
     } catch (error) {
       console.error('Socket setup error:', error);
     }
-
+ 
     return () => {
       if (socket.current) {
         console.log('Cleaning up socket connection');
@@ -736,61 +753,44 @@ const ChatApp = () => {
       }
     };
   }, [user]);
-
-  // Handle sending messages
+ 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedContact) {
-      toast.error("Please select a contact and type a message");
-      return;
-    }
-
+    if (!newMessage.trim() || !selectedContact) return;
+  
     const messageText = newMessage.trim();
     setNewMessage("");
-
+  
+    const tempMessage = {
+      text: messageText,
+      timestamp: new Date(),
+      from: selectedContact.phone_number === user.phone_number ? user.phone_number : 'me',
+      _id: Date.now().toString()
+    };
+  
+    setMessages(prev => [...prev, tempMessage]);
+  
     try {
       const response = await api.post("/api/messages/send", {
         to: selectedContact.phone_number,
         text: messageText
       });
-
-      if (response.data) {
-        setMessages(prev => {
-          const msgExists = prev.some(m => 
-            m.text === messageText && 
-            new Date(m.timestamp).getTime() > Date.now() - 5000
-          );
-          if (msgExists) return prev;
-          
-          const newMessages = [...prev, response.data];
-          localStorage.setItem(
-            `messages_${selectedContact.phone_number}`,
-            JSON.stringify(newMessages)
-          );
-          return newMessages;
-        });
-
-        setContacts(prev => {
-          const updated = prev.map(contact => 
-            contact.phone_number === selectedContact.phone_number
-              ? {
-                  ...contact,
-                  lastMessage: messageText,
-                  timestamp: new Date().toISOString()
-                }
-              : contact
-          ).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-          
-          localStorage.setItem('contacts', JSON.stringify(updated));
-          return updated;
-        });
+  
+      if (response.data?.message) {
+        setMessages(prev => 
+          prev.map(msg => 
+            msg._id === tempMessage._id ? {
+              ...response.data.message,
+              from: 'me' // Mark as sent by current user
+            } : msg
+          )
+        );
       }
     } catch (error) {
-      console.error('Send error:', error);
+      setMessages(prev => prev.filter(msg => msg._id !== tempMessage._id));
       toast.error("Failed to send message");
     }
   };
-
-  // Handle contact selection
+ 
   const handleContactSelect = async (contact) => {
     setSelectedContact(contact);
     try {
@@ -804,39 +804,54 @@ const ChatApp = () => {
       console.error('Failed to clear unread count:', error);
     }
   };
-
-  // Handle emoji selection
+ 
   const handleEmojiSelect = (emoji) => {
     console.log("Full Emoji Object:", emoji);
     console.log("Selected Emoji:", emoji.native);
     setNewMessage((prevMessage) => (prevMessage || "") + emoji.native);
     setShowEmojiPicker(false);
-
+ 
     setTimeout(() => {
       handleSendMessage();
     }, 100);
   };
-
+ 
   const toggleMode = () => {
     setIsChatbot((prev) => !prev);
   };
+ 
+  
+    
 
-  // Auto-scroll to bottom when new messages arrive
+  
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500" />
-      </div>
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, selectedContact]);
+  const ChatContainer = ({ contacts, selectedContact, handleContactSelect }) => {
+    // State for search query
+    const [searchQuery, setSearchQuery] = useState("");
+  
+    // Filter contacts based on search input
+    const filteredContacts = contacts?.filter((contact) =>
+      (contact.profile_name || contact.name || contact.phone_number)
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase())
     );
   }
-
+  
+  
+if (loading) {
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500" />
+    </div>
+  );
+};
   return (
     <Container>
-      <Sidebar>
+    <Sidebar>
         <SearchBar placeholder="Search or start new chat" />
         <ContactList>
           {contacts.map((contact) => (
@@ -864,6 +879,7 @@ const ChatApp = () => {
           ))}
         </ContactList>
       </Sidebar>
+  
   
       <ChatArea>
         {selectedContact ? (
@@ -912,21 +928,38 @@ const ChatApp = () => {
               </div>
             </ChatHeader>
   
-            <Messages className="relative">
-              {messages.map((msg, idx) => (
-                <div
-                  key={msg._id || idx}
-                  className={`message ${msg.from === user.phone_number ? "sent" : "received"}`}
-                >
-                  {msg.text}
-                  <div className="timestamp">
-                    {dayjs(msg.timestamp).format("hh:mm A")}
-                  </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </Messages>
-  
+            <Messages>
+  {messages.reduce((acc, msg, idx) => {
+    const msgDate = dayjs(msg.timestamp).format("YYYY-MM-DD");
+    const prevMsgDate = idx > 0 ? dayjs(messages[idx - 1].timestamp).format("YYYY-MM-DD") : null;
+
+    if (msgDate !== prevMsgDate) {
+      acc.push(
+        <div key={msgDate} className="text-center text-gray-500 my-3 text-sm">
+          {dayjs(msgDate).format("dddd, MMM D, YYYY")}
+        </div>
+      );
+    }
+
+    acc.push(
+      <MessageBubble
+        key={msg._id || idx}
+        $sent={msg.from === selectedContact?.phone_number ? false : true}
+        className={msg.from === selectedContact?.phone_number ? 'received' : 'sent'}
+      >
+        {msg.text}
+        <div className="text-xs text-gray-500 text-right mt-1">
+          {dayjs(msg.timestamp).format("hh:mm A")}
+        </div>
+      </MessageBubble>
+    );
+
+    return acc;
+  }, [])}
+  <div ref={messagesEndRef} />
+</Messages>
+
+            
             <MessageInput className="flex items-center gap-2 relative">
               <div className="relative">
                 <SmileIcon
@@ -1042,7 +1075,6 @@ const ChatApp = () => {
     </div>
   </div>
 )}
-
   
       {selectedContact && (
         <ChatProfile>

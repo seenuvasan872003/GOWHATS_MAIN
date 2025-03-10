@@ -21,8 +21,8 @@ const InventoryPage = () => {
   ) : (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-4xl">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">
+        <div className="md:flex justify-between items-center mb-6">
+          <h1 className="mb-4 md:mb-1 text-2xl font-bold text-gray-800">
             Inventory Management System
           </h1>
           <button

@@ -117,15 +117,15 @@ const PrintManagement = () => {
   );
 
   return (
-    <div className="bg-gradient-to-br from-grey-50 to-grey-100 min-h-screen py-10 px-6">
-      <div className="max-w-7xl mx-auto bg-white shadow-xl rounded-3xl p-8">
+    <div className="bg-gradient-to-br from-grey-50 to-grey-100 min-h-screen py-10 px-3 md:px-6">
+      <div className="max-w-7xl mx-auto bg-white shadow-xl rounded-3xl px-3 sm:px-8 py-8">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
           Print Management System
         </h1>
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-center justify-between mb-6">
           <button
             onClick={handlePrintAll}
-            className="bg-gradient-to-r from-green-400 to-green-600 text-white px-6 py-3 rounded-full shadow-lg hover:from-green-500 hover:to-green-700 transition duration-200"
+            className="bg-gradient-to-r from-green-400 to-green-600 text-white px-6 py-3 rounded-full shadow-lg hover:from-green-500 hover:to-green-700 transition duration-200 col-span-1 order-2 md:order-1"
           >
             Print All
           </button>
@@ -134,17 +134,17 @@ const PrintManagement = () => {
             placeholder="Search Order ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-grow border-2 border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:border-blue-500"
+            className="flex-grow border-2 border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:border-blue-500 md:col-span-1 lg:col-span-3 order-1 md:order-2"
           />
           <button
             onClick={handlePrintSelected}
-            className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:from-blue-500 hover:to-blue-700 transition duration-200"
+            className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:from-blue-500 hover:to-blue-700 transition duration-200 col-span-1 order-3 "
           >
             Print Selected
           </button>
           <button
             onClick={handleDownloadCSV}
-            className="bg-gradient-to-r from-purple-400 to-purple-600 text-white px-6 py-3 rounded-full shadow-lg hover:from-purple-500 hover:to-purple-700 transition duration-200"
+            className="bg-gradient-to-r from-purple-400 to-purple-600 text-white px-6 py-3 rounded-full shadow-lg hover:from-purple-500 hover:to-purple-700 transition duration-200 col-span-1 order-3"
           >
             Download CSV
           </button>

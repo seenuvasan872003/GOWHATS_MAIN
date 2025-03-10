@@ -34,7 +34,7 @@ const Packing = () => {
           Order Packing System
         </h1>
 
-        <div className="flex items-center space-x-4 mb-6">
+        <div className="flex flex-col gap-3 md:flex-row md:gap-5 md:items-center space-x-4 mb-6">
           <input
             type="text"
             placeholder="Enter Order Number or Scan QR Code"
@@ -43,8 +43,11 @@ const Packing = () => {
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
           />
           <button
-            onClick={handleFetchDetails}
-            className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg shadow font-bold"
+            onClick={() => {
+              handleFetchDetails();
+              setOrderNumber("");
+            }}
+            className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg shadow font-bold m-0"
           >
             Fetch Details
           </button>

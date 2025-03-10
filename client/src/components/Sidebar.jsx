@@ -45,10 +45,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       )}
       
       <div className={`fixed top-0 left-0 h-full shadow-lg transition-all duration-300 z-50
-        ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full w-20'} lg:translate-x-0`}
+        ${isOpen ? 'translate-x-0 w-30' : '-translate-x-full w-20'} lg:translate-x-0`}
         style={{ backgroundColor: '#FFFFFF' }}
       >
-        <div className="p-4 border-b flex items-center justify-center" style={{ backgroundColor: '#F5F5F5' }}>
+        <div className="p-4 border-b flex items-center justify-between" style={{ backgroundColor: '#F5F5F5' }}>
           <div className="flex items-center space-x-2">
             <img src={GoWhatslogo} alt="logo Image" className="w-6 h-6 rounded-full" />
           </div>
@@ -60,7 +60,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           {menuItems.map((item) => (
             <Link to={item.path} key={item.id}>
               <button
-                onClick={() => setActiveItem(item.id)}
+                onClick={() => { setActiveItem(item.id); toggleSidebar(); }}
                 className={`w-full flex items-center space-x-3 p-3 rounded-lg mb-2 transition-colors
                   ${activeItem === item.id 
                     ? 'text-white' 
