@@ -29,7 +29,7 @@ function Layout() {
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
       <div className="lg:ml-20">
         <header className="bg-white shadow-sm">
-          <div className="flex items-center justify-between lg:p-0 p-4">
+          <div className="flex items-center justify-between lg:justify-end lg:mr-5 lg:mt-2 lg:p-0 p-4">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
               className="p-2 lg:hidden"

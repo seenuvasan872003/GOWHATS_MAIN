@@ -4,7 +4,7 @@ import api from '../utils/axios';
 import styled from "styled-components";
 import { toast } from "react-hot-toast";
 import dayjs from "dayjs";
-import { BanIcon, ChevronDownIcon, EditIcon, SearchIcon, Mic, Send, SmileIcon, Search, X, Trash2, Pencil, Check } from "lucide-react"; // Imported icons
+import { BanIcon, ChevronDownIcon, EditIcon, SearchIcon, Mic, Send, SmileIcon, Search, X, Trash2, Pencil, Check,  ArrowLeft } from "lucide-react"; // Imported icons
 import { Paperclip, Image, Camera, FileText, User, BotIcon, UserIcon, Wallet, Landmark, ListFilter, LayoutPanelTop, } from "lucide-react";
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
@@ -14,17 +14,16 @@ import { sendTemplateMessage } from '../services/messageService';
 
 // Styled Components
 const Container = styled.div`
-  display: flex;
   height: 100vh;
+  width: 100%;
   background-color: #f8f9fa;
 `;
 
 const Sidebar = styled.div`
-  width: 320px;
+  
   background: #ffffff;
   border-right: 1px solid #ddd;
-  display: flex;
-  flex-direction: column;
+  
 `;
 
 const SearchBar = styled.input`
@@ -34,6 +33,7 @@ const SearchBar = styled.input`
   border-radius: 20px;
   outline: none;
   font-size: 14px;
+  width: calc(100% - 20px);
 `;
 
 const ContactList = styled.div`
@@ -88,10 +88,7 @@ const ContactItem = styled.div`
 `;
 
 const ChatArea = styled.div`
-  flex: 2;
-  display: flex;
-  flex-direction: column;
-  background: #f7f7f7;
+  
 `;
 
 const ChatHeader = styled.div`
@@ -116,8 +113,8 @@ const ChatHeader = styled.div`
     }
     
     .headavatar{
-      width: 40px;
-      height: 40px;
+      width: 50px;
+      height: 50px;
     }
 
     .chat-name {
@@ -253,8 +250,8 @@ const ProfileHeader = styled.div`
     gap: 16px;
   }
   .avatar{
-    width: 64px;
-    height: 64px;
+    width: 50px;
+    height: 50px;
     background-color: #16a34a;
     border-radius: 50%;
     display: flex;
@@ -531,6 +528,7 @@ const ChatApp = () => {
   const [showTemplates, setShowTemplates] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   const fetchTemplates = async () => {
     try {
@@ -793,17 +791,34 @@ const ChatApp = () => {
  
   const handleContactSelect = async (contact) => {
     setSelectedContact(contact);
+    setShowProfile(false); // Reset profile view when selecting a new contact
     try {
       if (contact.unreadCount > 0) {
         await api.put(`/api/contacts/${contact._id}/read`);
         setContacts(prev => prev.map(c => 
           c._id === contact._id ? { ...c, unreadCount: 0 } : c
         ));
+        
       }
     } catch (error) {
       console.error('Failed to clear unread count:', error);
     }
   };
+
+
+  const toggleProfile = () => {
+    setShowProfile(!showProfile);
+  };
+
+  const handleBackToChat = () => {
+    setShowProfile(false);
+  };
+
+  const handleBackToContacts = () => {
+    setSelectedContact(null);
+    setShowProfile(false);
+  };
+
  
   const handleEmojiSelect = (emoji) => {
     console.log("Full Emoji Object:", emoji);
@@ -850,8 +865,8 @@ if (loading) {
   );
 };
   return (
-    <Container>
-    <Sidebar>
+    <Container className="flex">
+    <Sidebar className={`w-full md:w-80 bg-white border-r border-gray-200 ${selectedContact ? 'hidden md:block' : 'block'}`}>
         <SearchBar placeholder="Search or start new chat" />
         <ContactList>
           {contacts.map((contact) => (
@@ -881,13 +896,23 @@ if (loading) {
       </Sidebar>
   
   
-      <ChatArea>
+      <ChatArea className={`flex-1 flex flex-col ${!selectedContact ? 'hidden md:flex' : showProfile ? 'hidden' : 'flex'}`}>
         {selectedContact ? (
           <>
-            <ChatHeader>
-              <div className="header-details relative">
-                <div className="avatar-header cursor-pointer" onClick={() => setSelectedContact(!selectedContact)}>
-                  <div className="avatar headavatar">
+            <ChatHeader >
+              <div className="header-details align-middle justify-center relative">
+                <div className="flex items-center"> 
+                  <ArrowLeft 
+                    size={20}
+                    className="mr-4 cursor-pointer md:hidden align-middle" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleBackToContacts();
+                    }}
+                  />
+                </div>
+                <div className="avatar-header cursor-pointer" onClick={() => toggleProfile()} > {/*onClick={() => setSelectedContact(!selectedContact)} */}
+                  <div className="headavatar flex items-center justify-center text-white text-xl font-bold rounded-full bg-[#16a34a] ">   
                     {selectedContact.name?.[0]?.toUpperCase() || selectedContact.phone_number?.[0]}
                   </div>
                   <div>
@@ -897,7 +922,7 @@ if (loading) {
                 </div>
               </div>
               <div className="search relative">
-                <div className="cursor-pointer relative">
+                <div className="cursor-pointer relative pr-3">
                   <SearchIcon
                     className="text-white hover:text-gray-600"
                     width={20}
@@ -959,7 +984,7 @@ if (loading) {
   <div ref={messagesEndRef} />
 </Messages>
 
-            
+<MessageInput className="flex items-center gap-2 relative"></MessageInput>
             <MessageInput className="flex items-center gap-2 relative">
               <div className="relative">
                 <SmileIcon
@@ -967,7 +992,7 @@ if (loading) {
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 />
                 {showEmojiPicker && (
-                  <div className="absolute bottom-12 left-0 z-50">
+                  <div className="absolute bottom-12 left-0 z-50 ">
                     <Picker data={data} onSelect={handleEmojiSelect} />
                   </div>
                 )}
@@ -1077,89 +1102,360 @@ if (loading) {
 )}
   
       {selectedContact && (
-        <ChatProfile>
-          <ProfileContainer>
-          <ProfileHeader>
-            <div className="flex justify-between mb-6">
+        <ChatProfile className={`w-full md:w-[450px] bg-white border-l border-gray-200 overflow-y-auto ${showTemplates ? 'hidden' : showProfile ? 'block' : 'hidden md:block'}`} >
+          {/* Mobile back button */}
+          <div className=" bg-[#4caf50] text-white p-4 flex items-center">
+            <ArrowLeft 
+              className="mr-2 cursor-pointer" 
+              onClick={handleBackToChat}
+            />
+            <span>Profile</span>
+          </div>
+        <ProfileContainer>
+          {/* Profile Header and Information */}
+          <ProfileHeader >
+            <div className="flex justify-between mb-6 ">
               <div className="profile-info">
-                <div className="avatar">
-                  {selectedContact?.name?.[0]?.toUpperCase()}
+                {/* Avatar: Display first letter of the contact's name */}
+                <div className="md:h-14 md:w-14 h-10 w-10 bg-[#4caf50] flex items-center justify-center text-white text-2xl font-bold rounded-full">
+                {selectedContact.name?.[0]?.toUpperCase() || selectedContact.phone_number?.[0]}
                 </div>
                 <div>
+                  {/* Contact Name */}
                   <h2 className="contact-name">
-                    {selectedContact?.name || "Select a contact"}
+                    {selectedContact ? selectedContact.name : 'Select a contact'}
                   </h2>
-                  <p className="contact-phone">
-                    {selectedContact?.phone_number || ""}
+                  {/* Contact Phone Number */}
+                  <p className="contact-phone font-medium text-4xl">
+                    {selectedContact ? selectedContact.phone_number : ''}
                   </p>
                 </div>
               </div>
+              {/* Block Button */}
               <div className="flex items-center h-fit py-2 px-4 text-sm font-medium text-white bg-red-500 rounded-lg cursor-pointer transition-colors duration-300 hover:bg-red-600">
-                <BanIcon className="icon mr-1" /> Block
+                <BanIcon className="icon mr-1 md:size-6 size-4" />
+                Block
               </div>
             </div>
 
-            <Tabs>
-              <Tab
-                className={activeTab === "Profile" ? "active" : ""}
+            {/* Tabs */}
+            <div className="tabs sm:flex space-x-4 bg-gray-100 p-2 rounded-lg w-fit mx-auto justify-center text-center">
+              <button
+                className={`w-40 px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-300 mb-3 sm:mb-0 ml-4 
+              ${activeTab === "Profile"
+                    ? "bg-green-600 text-white shadow-lg scale-105"
+                    : "bg-white text-green-700 border border-green-400 hover:bg-green-50"
+                  }`}
                 onClick={() => setActiveTab("Profile")}
               >
                 Profile
-              </Tab>
-              <Tab
-                className={activeTab === "Assisted Sales" ? "active" : ""}
+              </button>
+
+              <button
+                className={`w-40 px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-300 
+              ${activeTab === "Assisted Sales"
+                    ? "bg-green-600 text-white shadow-lg scale-105"
+                    : "bg-white text-green-700 border border-green-400 hover:bg-green-50"
+                  }`}
                 onClick={() => setActiveTab("Assisted Sales")}
               >
                 Assisted Sales
-              </Tab>
-            </Tabs>
+              </button>
+            </div>
           </ProfileHeader>
 
+          {/* Profile Tab Content */}
           {activeTab === "Profile" && (
             <>
-              <OrderSummary>
-                <OrderSummaryCard>
-                  <OrderSummaryTitle>Orders</OrderSummaryTitle>
-                  <OrderSummaryValue>12</OrderSummaryValue>
-                </OrderSummaryCard>
-              </OrderSummary>
+              {/* Order Summary Cards */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                <div className=" border-[#e5e7eb] rounded-2xl shadow-md border-solid p-4">
+                  <h3 className="text-sm font-medium mb-2">Orders Count</h3>
+                  <p className="text-2xl font-bold">3</p>
+                </div>
+                <div className=" border-[#e5e7eb] rounded-2xl shadow-md border-solid p-4">
+                  <h3 className="text-sm font-medium mb-2">Total Order Value</h3>
+                  <p className="text-2xl font-bold">₹50k</p>
+                </div>
+                <div className=" border-[#e5e7eb] rounded-2xl shadow-md border-solid p-4">
+                  <div className="wallet-header flex gap-2 items-center justify-between">
+                    <h3 className="text-sm font-medium mb-2">Wallet</h3>
+                    <button className="edit-button relative">
+                      <EditIcon size={18} className="icon" onClick={() => setShowWallet(!showWallet)} />
+                      {showWallet && (
+                        <div className="absolute bottom-10 -left-40 stak  mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow-md z-50">
+                          <ul className="py-2 text-sm text-gray-700">
+                            <li className="flex items-center px-4 py-2 cursor-pointer hover:bg-green-500 hover:text-white">
+                              <Wallet size={16} className="mr-2" /> Add Money
+                            </li>
+                            <li className="flex items-center px-4 py-2 hover:bg-green-500 hover:text-white cursor-pointer">
+                              <Landmark size={16} className="mr-2" /> withdraw
+                            </li>
+                          </ul>
+                        </div>
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-2xl font-bold">₹0</p>
+                </div>
+              </div>
 
-              <LastOrder>
-                <LastOrderHeader>
-                  <LastOrderId>#12345</LastOrderId>
-                  <SearchButton>View</SearchButton>
-                </LastOrderHeader>
-                <LastOrderStatus>
-                  <StatusTag>Delivered</StatusTag>
-                  <OrderDate>12 Aug 2024</OrderDate>
-                </LastOrderStatus>
-                <LastOrderFooter>
-                  <OrderTotal>$120</OrderTotal>
-                  <DetailsButton>Details</DetailsButton>
-                </LastOrderFooter>
-              </LastOrder>
+              {/* Last Order */}
+              <div className="last-order overflow-auto max-h-90 relative">
 
-              <WooCommerceNotes>
-                <NotesTabs>
-                  <NotesTab>Public Notes</NotesTab>
-                  <NotesTab>Private Notes</NotesTab>
-                </NotesTabs>
-                <NotesContent>
-                  <Note>
-                    <NoteLabel>Note 1</NoteLabel>
-                    <NoteInfo>
-                      <NoteValue>Updated on 10th Aug</NoteValue>
-                      <EditNote>Edit</EditNote>
-                    </NoteInfo>
-                  </Note>
-                </NotesContent>
-              </WooCommerceNotes>
+                <div className=" mb-4 sticky top-0 z-10 bg-white">
+                  <h1 className="font-bold mb-2">My Orders</h1>
+                  <div className="flex gap-6 items-center">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                      <input
+                        type="text"
+                        className="pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4caf50]"
+                        placeholder="Search order"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ListFilter className="icon" />
+                      <p>Filters</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-col gap-2.5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      {/* <div className="h-20 w-20 bg-amber-300">1</div> */}
+                      <img src="https://m.media-amazon.com/images/I/61YsjBvrKmL._AC_UF1000,1000_QL80_.jpg" className="-20 w-20" alt="" />
+                    </div>
+                    <div>
+                      <span className="block product-name">POCO X7 Pro 5G</span>
+                      <span className="order-date block">Delivered on Jan 3,2025</span>
+                      <RatingStars rating={4} />  {/* Replace 'FULFILLED' with a 4-star rating */}
+                    </div>
+                    <div>
+                      <ChevronDownIcon className="icon" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcScjD1Cw_N6FsbkMk2ihlD3xIto_eyvg4QexQ&s" className="-20 w-20" alt="" />
+                    </div>
+                    <div>
+                      <span className="block product-name">Fire-Boltt Smartwatch</span>
+                      <span className="order-date block">Delivered on nov 30,2024</span>
+                      <RatingStars rating={3} />
+                    </div>
+                    <div>
+                      <ChevronDownIcon className="icon" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxZ-yh5pgiE4k8TP75SXdYXgRG7GYuvxSY1g&s" className="-20 w-20" alt="" />
+                    </div>
+                    <div>
+                      <span className="block product-name">Back Cover for POCO X3</span>
+                      <span className="order-date block">Delivered on feb 20,2024</span>
+                      <RatingStars rating={2} />
+                    </div>
+                    <div>
+                      <ChevronDownIcon className="icon" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* WooCommerce Notes */}
+              <div className="p-4 border border-gray-300 rounded-lg shadow-md">
+                <div className="border-b border-gray-300 mb-4 sm:flex space-x-4 bg-gray-100 p-2 rounded-lg w-fit mx-auto justify-center text-center">
+                  {/* <button className="notes-tab">Address</button>
+                  <button className="notes-tab">Note</button> */}
+                  <button
+                    className={`w-40 px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-300 mb-3 sm:mb-0 ml-4
+              ${activetab === "Address"
+                        ? "bg-green-600 text-white shadow-lg scale-105"
+                        : "bg-white text-green-700 border border-green-400 hover:bg-green-50"
+                      }`}
+                    onClick={() => setactivetab("Address")}
+                  >
+                    Address
+                  </button>
+
+                  <button
+                    className={`w-40 px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-300 
+              ${activetab === "Note"
+                        ? "bg-green-600 text-white shadow-lg scale-105"
+                        : "bg-white text-green-700 border border-green-400 hover:bg-green-50"
+                      }`}
+                    onClick={() => setactivetab("Note")}
+                  >
+                    Note
+                  </button>
+                </div>
+                {/* Address */}
+                {activetab === "Address" && (
+                  <>
+                    <div className="flex-col gap-4 space-y-4">
+                      <div className="note flex flex-col">
+                        <span className="note-label font-bold">Email Address</span>
+                        <div className="note-info flex justify-between items-center">
+                          {editingField === "email" ? (
+                            <input
+                              type="email"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              className="border p-1 rounded w-full"
+                            />
+                          ) : (
+                            <span className="note-value">{email}</span>
+                          )}
+                          {editingField === "email" ? (
+                            <button className="ml-2 bg-green-500 text-white px-2 py-1 rounded" onClick={handleSave}>Save</button>
+                          ) : (
+                            <button className="edit-note ml-2 text-blue-500" onClick={() => handleEdit("email")}>Edit</button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="note flex flex-col">
+                        <span className="note-label font-bold">Address</span>
+                        <div className="note-info flex justify-between items-center">
+                          {editingField === "address" ? (
+                            <input
+                              type="text"
+                              value={address}
+                              onChange={(e) => setAddress(e.target.value)}
+                              className="border p-1 rounded w-full"
+                            />
+                          ) : (
+                            <span className="note-value">{address}</span>
+                          )}
+                          {editingField === "address" ? (
+                            <button className="ml-2 bg-green-500 text-white px-2 py-1 rounded" onClick={handleSave}>Save</button>
+                          ) : (
+                            <button className="edit-note ml-2 text-blue-500" onClick={() => handleEdit("address")}>Edit</button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+                {/* Note */}
+                {activetab === "Note" && (
+                  <>
+                    <div className="notes-section">
+                      <input
+                        type="text"
+                        value={newNote}
+                        onChange={(e) => setNewNote(e.target.value)}
+                        className="border p-2 w-full rounded"
+                        placeholder="Write a note..."
+                      />
+                      <button
+                        className="mt-2 bg-green-500 text-white px-3 py-1 rounded"
+                        onClick={handleAddNote}
+                      >
+                        Add Note
+                      </button>
+                      <div className="notes-list mt-4">
+                        {notes.length > 0 ? (
+                          notes.map((note, index) => (
+                            <div
+                              key={index}
+                              className="note-item flex justify-between items-center bg-gray-200 p-2 rounded mb-2"
+                            >
+                              {editingIndex === index ? (
+                                <input
+                                  type="text"
+                                  value={editText}
+                                  onChange={(e) => setEditText(e.target.value)}
+                                  className="border p-1 rounded w-full mr-2"
+                                />
+                              ) : (
+                                <span>{note}</span>
+                              )}
+
+                              <div className="flex space-x-2">
+                                {editingIndex === index ? (
+                                  <button
+                                    className="bg-green-500 text-white p-1 rounded"
+                                    onClick={() => handleSaveEdit(index)}
+                                  >
+                                    <Check size={18} />
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="text-green-500 p-1"
+                                    onClick={() => handleEditNote(index)}
+                                  >
+                                    <Pencil size={18} />
+                                  </button>
+                                )}
+                                <button
+                                  className="text-red-500 p-1"
+                                  onClick={() => handleDeleteNote(index)}
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-gray-500">No notes yet. Start by adding one!</p>
+                        )}
+                      </div>
+                    </div>
+
+                  </>
+                )}
+
+              </div>
             </>
           )}
 
-          {activeTab === "Assisted Sales" && <div className="assisted-sales">Sales Data</div>}
+          {/* Assisted Sales Tab Content */}
+          {activeTab === "Assisted Sales" && (
+            <div className="assisted-sales">
+              <div className="flex justify-center gap-6">
+                <p className="text-sm font-semibold">Chatbot Assistance</p>
+                <div
+                  className={`relative flex items-center w-16 h-8 p-1 rounded-full cursor-pointer transition-all duration-500 ${isChatbot ? "justify-start bg-gray-200" : "justify-end bg-green-400"
+                    }`}
+                  onClick={() => {
+                    toggleMode();
+                    setAssistedSalesMode(isChatbot ? "Human" : "Chatbot");
+                  }}
+                >
+                  {/* Toggle Ball */}
+                  <div className="w-6 h-6 bg-green-700 rounded-full shadow-md flex items-center justify-center transition-all duration-1000">
+                    {isChatbot ? (
+                      <BotIcon className="w-4 h-4 text-white" onClick={() => setAssistedSalesMode("Chatbot")} />
+                    ) : (
+                      <UserIcon className="w-4 h-4 text-white" onClick={() => setAssistedSalesMode("Human")} />
+                    )}
+                  </div>
+                </div>
+                <p className="text-sm font-semibold">Human Assistance</p>
+              </div>
+
+              {/* Chatbot Mode */}
+              {assistedSalesMode === "Chatbot" && (
+                <div className="chatbot-content">
+                  <h3 className="text-center">Chatbot Assistance</h3>
+                  <p>AI-powered chatbot available for quick assistance.</p>
+                </div>
+              )}
+
+              {/* Human Mode */}
+              {assistedSalesMode === "Human" && (
+                <div className="human-content">
+                  <h3 className="text-center">Human Assistance</h3>
+                  <p>Connecting to a sales representative...</p>
+                </div>
+              )}
+            </div>
+          )}
+
         </ProfileContainer>
-        </ChatProfile>
+      </ChatProfile>
       )}
     </Container>
   );
