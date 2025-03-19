@@ -88,6 +88,11 @@ const ContactItem = styled.div`
 `;
 
 const ChatArea = styled.div`
+  flex-direction: column;
+  background-color: #f0f0f0; /* Lighter background */
+  position: relative;
+  height: 100%;
+  overflow: hidden !important;
   
 `;
 
