@@ -1109,7 +1109,7 @@ if (loading) {
       {selectedContact && (
         <ChatProfile className={`w-full md:w-[450px] bg-white border-l border-gray-200 overflow-y-auto ${showTemplates ? 'hidden' : showProfile ? 'block' : 'hidden md:block'}`} >
           {/* Mobile back button */}
-          <div className=" bg-[#4caf50] text-white p-4 flex items-center">
+          <div className=" bg-[#4caf50] text-white p-4 flex items-center sticky top-0 z-10">
             <ArrowLeft 
               className="mr-2 cursor-pointer" 
               onClick={handleBackToChat}
